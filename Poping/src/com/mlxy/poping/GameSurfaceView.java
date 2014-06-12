@@ -10,9 +10,11 @@ import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Message;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.Toast;
 
 /** 游戏界面类。 */
 public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callback {
@@ -43,6 +45,11 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	private Block selectedBlock;
 	/** 被选中的方块组。*/
 	private ArrayList<Block> selectedBlocks;
+	
+	/** 分数。*/
+	private long score;
+	/** 关卡。*/
+	private long level;
 
 	/** 构造函数。 */
 	public GameSurfaceView(Context context) {
@@ -55,7 +62,15 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		selectedBlock = null;
 		selectedBlocks = null;
 		
+		score = 0;
+		level = 0;
+	}
+	
+	/** 开始新的一关。*/
+	private void newLevel() {
+		this.level++;
 		initBlockList();
+		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
 	
 	/** 初始化方块列表。 */
@@ -88,8 +103,9 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
 		this.topSidePosition = screenHeight - sideLengthOfBlock * BLOCKS_PER_COLUMN;
 
-//debug();
-		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
+		// 开始第一关。
+		newLevel();
+		Log.v("asdf", this.level+"");
 	}
 
 	@Override
@@ -113,6 +129,13 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 				drawBlock(canvas, blockList[i][j]);
 			}
 		}
+		
+		// 画出分数。
+		paint.setColor(Color.BLACK);
+		paint.setTextSize(40);
+		canvas.drawText("Score: " + this.score, 50, 100, paint);
+		canvas.drawText("Level: " + this.level, 50, 50, paint);
+		paint = new Paint();
 	}
 
 	/** 绘制出一个给定的方块。 */
@@ -188,13 +211,25 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 			Message msg = packBlockMessages(selectedBlocks, UpdateHandler.MESSAGE_DRAW_SELECTED_MARK);
 			updateHandler.sendMessage(msg);
 		} else {
-			// TODO 消除逻辑
+			// 破坏方块。
 			destroyBlocks(selectedBlocks);
+			// 下落填满空间。
 			dropBlocks();
+			// 向左填满空列。
 			alignLeft();
-//			if (isDead()) {
-//				Toast.makeText(this.getContext(), "死啦", Toast.LENGTH_LONG).show();
-//			}
+			// 死局判断。
+			if (isDead()) {
+				// 计算死局得分。
+				int remainedBlocks = countRemainedBlocks();
+				long score = new Algorithm().calcRemainedScore(remainedBlocks);
+				this.score += score;
+				
+				// 进入下一关。
+				newLevel();
+				Toast.makeText(this.getContext(),
+						"剩余方块" + remainedBlocks + "个，得分" + score + "，进入第" + this.level + "关",
+						Toast.LENGTH_SHORT).show();
+			}
 			
 			// 清空选中方块列表。
 			selectedBlocks = null;
@@ -236,6 +271,9 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 			GameSurfaceView.blockList[blockToDestroy.getRow()][blockToDestroy.getColumn()] = null;
 		}
 		
+		// 更新分数。
+		this.score += new Algorithm().calcDestroyScore(blockList.size());
+		
 		// 消除完之后重绘画面。
 		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
@@ -269,6 +307,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
 	
+	/** 方块左移填满空列。*/
 	private void alignLeft() {
 		int numOfEmptyColumn = 0;
 		int firstEmptyColumn = -1;
@@ -333,7 +372,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 				
 				// 进行同色检查，有一个返回列表大于零则不是死局。
 				listToCheck = new Algorithm().getBlocksInSameColor(blockList[row][column]);
-				if (listToCheck.size() > 0){
+				if (listToCheck.size() > 1){
 					return false;
 				}
 			}
@@ -342,11 +381,19 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		return true;
 	}
 	
-	private void debug() {
-		for (int row = 0; row < 10; row++) {
-			blockList[row][5].setColor(Block.COLOR_BLUE);
-			blockList[row][6].setColor(Block.COLOR_BLUE);
+	/** 统计列表中剩余方块。*/
+	private int countRemainedBlocks() {
+		int count = 0;
+		
+		for (int i = 0; i < BLOCKS_PER_COLUMN; i++) {
+			for (int j = 0; j < BLOCKS_PER_ROW; j++) {
+				if (blockList[i][j] != null) {
+					count++;
+				}
+			}
 		}
+		
+		return count;
 	}
 	
 	public int getScreenWidth() {

@@ -101,4 +101,20 @@ public class Algorithm {
 	private boolean isChecked(Block block) {
 		return checkedBlocks.contains(block);
 	}
+	
+	/** 根据消除方块数量计算得分。*/
+	public long calcDestroyScore(int destroyedBlocks) {
+		long score = destroyedBlocks * destroyedBlocks * 5;
+		return score;
+	}
+	
+	/** 根据剩余方块数计算得分。*/
+	public long calcRemainedScore(int remainedBlocks) {
+		long score = 2000 - remainedBlocks * 100;
+		if (score < 0) {
+			return 0;
+		} else {
+			return score;
+		}
+	}
 }

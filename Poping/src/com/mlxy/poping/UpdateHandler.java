@@ -3,7 +3,6 @@ package com.mlxy.poping;
 import java.util.ArrayList;
 
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
@@ -28,8 +27,7 @@ public class UpdateHandler extends Handler {
 		Canvas canvas = null;
 		try {
 			// 锁定画布。
-			canvas = surfaceHolder.lockCanvas(new Rect(0, surfaceView.getTopSidePosition(),
-									surfaceView.getWidth(), surfaceView.getHeight()));
+			canvas = surfaceHolder.lockCanvas();
 			
 			switch (msg.what) {
 			// 重绘所有方块。
