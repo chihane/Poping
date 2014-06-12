@@ -10,7 +10,6 @@ import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Message;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -33,7 +32,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	private int topSidePosition;
 
 	/** 存放所有方块的二维数组。 */
-	public final static Block[][] blockList = new Block[BLOCKS_PER_ROW][BLOCKS_PER_COLUMN];
+	public final static Block[][] blockList = new Block[BLOCKS_PER_COLUMN][BLOCKS_PER_ROW];
 
 	/** 绘图用画笔。 */
 	private Paint paint;
@@ -76,10 +75,10 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	/** 初始化方块列表。 */
 	private void initBlockList() {
 		int id = 0;
-		for (int i = 0; i < BLOCKS_PER_ROW; i++) {
-			for (int j = 0; j < BLOCKS_PER_COLUMN; j++) {
+		for (int column = 0; column < BLOCKS_PER_ROW; column++) {
+			for (int row = 0; row < BLOCKS_PER_COLUMN; row++) {
 				// 给方块随机抽取一个颜色塞入当前遍历位置。
-				blockList[i][j] = new Block(id, getRandomColor(), i, j);
+				blockList[row][column] = new Block(id, getRandomColor(), row, column);
 				id++;
 			}
 		}
@@ -105,7 +104,6 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
 		// 开始第一关。
 		newLevel();
-		Log.v("asdf", this.level+"");
 	}
 
 	@Override
@@ -121,12 +119,12 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		canvas.drawColor(Color.WHITE);
 
 		// 重新依次画出所有方块。
-		for (int i = 0; i < BLOCKS_PER_ROW; i++) {
-			for (int j = 0; j < BLOCKS_PER_COLUMN; j++) {
-				if (blockList[i][j] == null) {
+		for (int column = 0; column < BLOCKS_PER_ROW; column++) {
+			for (int row = 0; row < BLOCKS_PER_COLUMN; row++) {
+				if (blockList[row][column] == null) {
 					continue;
 				}
-				drawBlock(canvas, blockList[i][j]);
+				drawBlock(canvas, blockList[row][column]);
 			}
 		}
 		
