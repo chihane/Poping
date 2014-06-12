@@ -6,6 +6,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.Paint.Style;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Message;
@@ -87,6 +88,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
 		this.topSidePosition = screenHeight - sideLengthOfBlock * BLOCKS_PER_COLUMN;
 
+//debug();
 		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
 
@@ -128,18 +130,39 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
 		// 绘制方块。
 		canvas.drawRect(r, paint);
+		
+		// 重新设置画笔风格。
+		paint.setColor(Color.BLACK);
+		paint.setStyle(Style.STROKE);
+		paint.setStrokeWidth(5);
+		
+		// 绘制方块边框。
+		canvas.drawRect(r, paint);
+		
+		// 初始化画笔样式。
+		paint = new Paint();
 	}
 	
 	/** 在指定的方块上绘制选中标志。 */
 	public void drawSelectedMark(Canvas canvas, Block block) {
-		paint.setColor(Color.BLACK);
+		// 设置画笔风格。
+		paint.setColor(Color.WHITE);
+		paint.setStyle(Style.STROKE);
+		paint.setStrokeWidth(5);
 		
-		// 取方块左边缘和上边缘坐标。
+		// 取方块左边缘和上边缘坐标，确定矩形对象。
 		int leftCoordinate = block.getColumn() * sideLengthOfBlock;
 		int topCoordinate = topSidePosition + block.getRow() * sideLengthOfBlock;
+		Rect r = new Rect(leftCoordinate,
+				topCoordinate,
+				leftCoordinate + sideLengthOfBlock,
+				topCoordinate + sideLengthOfBlock);
 		
-		canvas.drawCircle(leftCoordinate + sideLengthOfBlock / 2, topCoordinate + sideLengthOfBlock / 2,
-				sideLengthOfBlock / 6, paint);
+		// 绘制方块边框。
+		canvas.drawRect(r, paint);
+		
+		// 恢复默认画笔风格。
+		paint = new Paint();
 	}
 	
 	/** 点击屏幕事件。*/
@@ -155,13 +178,23 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		// 如果已选方块组是空的，或者被点击的方块不在已选方块组里。
 		if (selectedBlocks == null || !selectedBlocks.contains(selectedBlock)) {
 			// 获取同色方块列表，打包发送给Handler更新画面。
-			selectedBlocks = Algorithm.getBlocksInSameColor(selectedBlock);
+			selectedBlocks = new Algorithm().getBlocksInSameColor(selectedBlock);
+			
+			// 列表里只有一个方块的话就无视掉。
+			if (selectedBlocks.size() <= 1) {
+				return super.onTouchEvent(event);
+			}
+			
 			Message msg = packBlockMessages(selectedBlocks, UpdateHandler.MESSAGE_DRAW_SELECTED_MARK);
 			updateHandler.sendMessage(msg);
 		} else {
 			// TODO 消除逻辑
 			destroyBlocks(selectedBlocks);
 			dropBlocks();
+			alignLeft();
+//			if (isDead()) {
+//				Toast.makeText(this.getContext(), "死啦", Toast.LENGTH_LONG).show();
+//			}
 			
 			// 清空选中方块列表。
 			selectedBlocks = null;
@@ -218,7 +251,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 					for (int i = row-1; i >= 0; i--) {
 						// 直到找到了第一个非空的位置，则
 						if (blockList[i][column] != null) {
-							// 把这个位置上的方块放到刚才发现的空位置上。
+							// 把这个位置上的方块移动到刚才发现的空位置上。
 							blockList[row][column] = blockList[i][column];
 							blockList[i][column] = null;
 							// 然后重新设置方块的位置属性。
@@ -234,6 +267,86 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		
 		// 下落完之后重绘画面。
 		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
+	}
+	
+	private void alignLeft() {
+		int numOfEmptyColumn = 0;
+		int firstEmptyColumn = -1;
+		boolean hasEmptyColumn = false;
+		
+		// 统计出两片非空列中空列的数量。
+		outerFor: for (int column = 0; column < BLOCKS_PER_ROW - 1; column++) {
+			// 找到第一个空列。
+			if (blockList[BLOCKS_PER_COLUMN-1][column] == null) {
+				firstEmptyColumn = column;
+				for (int c = column; c < BLOCKS_PER_ROW - 1; c++) {
+					// 统计空列数量。
+					if (blockList[BLOCKS_PER_COLUMN-1][c] == null) {
+						numOfEmptyColumn++;
+					}
+					// 找到后面的非空列。
+					if (blockList[BLOCKS_PER_COLUMN-1][c] != null) {
+						hasEmptyColumn = true;
+						break outerFor;
+					}
+				}
+			}
+		}
+		
+		// 如果没必要左移就直接跳出方法。
+		if (!hasEmptyColumn) {
+			return;
+		}
+		
+		// 从空列开始，依次向空列数之后的列要方块。
+		for (int column = firstEmptyColumn; column < BLOCKS_PER_ROW - numOfEmptyColumn; column++) {
+			for (int row = 0; row < BLOCKS_PER_COLUMN; row++) {
+				// 如果后面的也是空位置，那两边都是空位置，直接跳过。
+				if (blockList[row][column + numOfEmptyColumn] == null) {
+					continue;
+				}
+				
+				// 把后面的方块移动到前面来。
+				blockList[row][column] = blockList[row][column + numOfEmptyColumn];
+				blockList[row][column + numOfEmptyColumn] = null;
+				// 更新方块属性。
+				blockList[row][column].setRow(row);
+				blockList[row][column].setColumn(column);
+			}
+		}
+		// 左移完之后重绘画面。
+		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
+	}
+	
+	/** 死局检查。*/
+	private boolean isDead() {
+		// 用于检查的方块。
+		ArrayList<Block> listToCheck;
+		
+		// 遍历总方块列表。
+		for (int column = 0; column < BLOCKS_PER_ROW-1; column++) {
+			for (int row = 0; row < BLOCKS_PER_COLUMN; row++) {
+				// 碰到空值就跳过。
+				if (blockList[row][column] == null) {
+					continue;
+				}
+				
+				// 进行同色检查，有一个返回列表大于零则不是死局。
+				listToCheck = new Algorithm().getBlocksInSameColor(blockList[row][column]);
+				if (listToCheck.size() > 0){
+					return false;
+				}
+			}
+		}
+		
+		return true;
+	}
+	
+	private void debug() {
+		for (int row = 0; row < 10; row++) {
+			blockList[row][5].setColor(Block.COLOR_BLUE);
+			blockList[row][6].setColor(Block.COLOR_BLUE);
+		}
 	}
 	
 	public int getScreenWidth() {

@@ -4,24 +4,23 @@ import java.util.ArrayList;
 
 public class Algorithm {
 	/** 已被递归过的方块。*/
-	private static ArrayList<Block> checkedBlocks;
+	private ArrayList<Block> checkedBlocks;
 	/** 相同颜色准备返回的方块。*/
-	private static ArrayList<Block> blocksInSameColor;
+	private ArrayList<Block> blocksInSameColor;
 	
 	/** 获取存有与当前方块颜色相同首尾相连的一片方块的列表。*/
-	public static ArrayList<Block> getBlocksInSameColor(Block selectedBlock) {
+	public ArrayList<Block> getBlocksInSameColor(Block selectedBlock) {
 		// 初始化两个缓存列表。
 		checkedBlocks = new ArrayList<Block>();
 		blocksInSameColor = new ArrayList<Block>();
 		
 		// 执行递归。
 		checkFourSides(selectedBlock);
-		
 		return blocksInSameColor;
 	}
 	
 	/** 递归，不停检查四面。*/
-	private static void checkFourSides(Block block) {
+	private void checkFourSides(Block block) {
 		// 如果当前方块已被检查过，则跳出当前递归。
 		if (isChecked(block)) {
 			return;
@@ -29,6 +28,8 @@ public class Algorithm {
 		
 		// 标记当前方块为已被检查过。
 		checkedBlocks.add(block);
+		// 将当前方块加入同色列表。
+		blocksInSameColor.add(block);
 		
 		// 检查上下左右的方块。
 		checkUp(block);
@@ -37,7 +38,7 @@ public class Algorithm {
 		checkRight(block);
 	}
 	
-	private static void checkUp(Block block) {
+	private void checkUp(Block block) {
 		// 越界(上方不存在方块)则跳出。
 		if ((block.getRow()-1) < 0) {
 			return;
@@ -51,13 +52,11 @@ public class Algorithm {
 			return;
 		}
 		
-		blocksInSameColor.add(blockUpside);
-		
 		// 下一次递归。
 		checkFourSides(blockUpside);
 	}
 	
-	private static void checkDown(Block block) {
+	private void checkDown(Block block) {
 		if ((block.getRow()+1) >= GameSurfaceView.BLOCKS_PER_COLUMN) {
 			return;
 		}
@@ -68,12 +67,10 @@ public class Algorithm {
 			return;
 		}
 		
-		blocksInSameColor.add(blockDownside);
-		
 		checkFourSides(blockDownside);
 	}
 
-	private static void checkLeft(Block block) {
+	private void checkLeft(Block block) {
 		if ((block.getColumn()-1) < 0) {
 			return;
 		}
@@ -84,12 +81,10 @@ public class Algorithm {
 			return;
 		} 
 		
-		blocksInSameColor.add(blockLeftside);
-		
 		checkFourSides(blockLeftside);
 	}
 
-	private static void checkRight(Block block) {
+	private void checkRight(Block block) {
 		if ((block.getColumn()+1) >= GameSurfaceView.BLOCKS_PER_ROW) {
 			return;
 		}
@@ -100,12 +95,10 @@ public class Algorithm {
 			return;
 		}
 		
-		blocksInSameColor.add(blockRightside);
-		
 		checkFourSides(blockRightside);
 	}
 	
-	private static boolean isChecked(Block block) {
+	private boolean isChecked(Block block) {
 		return checkedBlocks.contains(block);
 	}
 }
