@@ -8,13 +8,13 @@ import android.graphics.Color;
 public class Block implements Serializable {
 	private static final long serialVersionUID = 6827165505563814335L;
 	
-	public static final int COLOR_RED = Color.RED;
-	public static final int COLOR_BLUE = Color.BLUE;
-	public static final int COLOR_GREEN = Color.GREEN;
-	public static final int COLOR_YELLOW = Color.YELLOW;
-	public static final int COLOR_MAGENTA = Color.MAGENTA;
+	public static final int COLOR_ONE = Color.parseColor("#5FD9CD");
+	public static final int COLOR_TWO = Color.parseColor("#FFCC33");
+	public static final int COLOR_THREE = Color.parseColor("#F0ADA1");
+	public static final int COLOR_FOUR = Color.parseColor("#66CC66");
+	public static final int COLOR_FIVE = Color.parseColor("#FC7FEE");
 	/** 可用颜色列表。*/
-	public static final int[] COLOR_LIST = { COLOR_RED, COLOR_BLUE, COLOR_GREEN, COLOR_YELLOW, COLOR_MAGENTA };
+	public static final int[] COLOR_LIST = { COLOR_ONE, COLOR_TWO, COLOR_THREE, COLOR_FOUR, COLOR_FIVE };
 
 	private int id;
 	
