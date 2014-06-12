@@ -38,7 +38,10 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	/** 更新内容用句柄。 */
 	private UpdateHandler updateHandler;
 	
-	private Algorithm algorithm;
+	/** 被点击的方块。*/
+	private Block selectedBlock;
+	/** 被选中的方块组。*/
+	private ArrayList<Block> selectedBlocks;
 
 	/** 构造函数。 */
 	public GameSurfaceView(Context context) {
@@ -48,7 +51,8 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		paint = new Paint();
 		updateHandler = new UpdateHandler(this);
 		
-		algorithm = new Algorithm(this);
+		selectedBlock = null;
+		selectedBlocks = null;
 		
 		initBlockList();
 	}
@@ -89,7 +93,6 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	@Override
 	public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
 	}
-
 	@Override
 	public void surfaceDestroyed(SurfaceHolder holder) {
 	}
@@ -129,7 +132,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	
 	/** 在指定的方块上绘制选中标志。 */
 	public void drawSelectedMark(Canvas canvas, Block block) {
-		paint.setColor(Color.WHITE);
+		paint.setColor(Color.BLACK);
 		
 		// 取方块左边缘和上边缘坐标。
 		int leftCoordinate = block.getColumn() * sideLengthOfBlock;
@@ -142,21 +145,27 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	/** 点击屏幕事件。*/
 	@Override
 	public boolean onTouchEvent(MotionEvent event) {
-		Block selectedBlock = getTouchedBlock(event.getX(), event.getY());
+		selectedBlock = getTouchedBlock(event.getX(), event.getY());
 		
 		// 对应位置没有方块就直接返回。
 		if (selectedBlock == null) {
 			return super.onTouchEvent(event);
 		}
-		//TODO: 点了方块之后干吗？
 		
-		//ArrayList<Block> blockList = new ArrayList<Block>();
-		//blockList.add(selectedBlock);
-		// 获取同色方块列表，打包发送。
-		ArrayList<Block> blockList = algorithm.getBlocksInSameColor(selectedBlock);
-		Message msg = packBlockMessages(blockList, UpdateHandler.MESSAGE_DRAW_SELECTED_MARK);
-		updateHandler.sendMessage(msg);
-		
+		// 如果已选方块组是空的，或者被点击的方块不在已选方块组里。
+		if (selectedBlocks == null || !selectedBlocks.contains(selectedBlock)) {
+			// 获取同色方块列表，打包发送给Handler更新画面。
+			selectedBlocks = Algorithm.getBlocksInSameColor(selectedBlock);
+			Message msg = packBlockMessages(selectedBlocks, UpdateHandler.MESSAGE_DRAW_SELECTED_MARK);
+			updateHandler.sendMessage(msg);
+		} else {
+			// TODO 消除逻辑
+			destroyBlocks(selectedBlocks);
+			//dropBlocks();
+			
+			// 清空选中方块列表。
+			selectedBlocks = null;
+		}
 		return super.onTouchEvent(event);
 	}
 	
@@ -183,6 +192,47 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		int j = (int) posX / getSideLengthOfBlock();
 		
 		return blockList[i][j];
+	}
+	
+	/** 从总方块列表里消除列表参数中的方块。*/
+	private void destroyBlocks(ArrayList<Block> blockList) {
+		Block blockToDestroy = null;
+		
+		for (int i = 0; i < blockList.size(); i++) {
+			blockToDestroy = blockList.get(i);
+			GameSurfaceView.blockList[blockToDestroy.getRow()][blockToDestroy.getColumn()] = null;
+		}
+		
+		// 消除完之后重绘画面。
+		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
+	}
+	
+	/** 悬空方块全部下落。*/
+	private void dropBlocks() {
+		// 从左到右，从下到上地遍历总方块列表。
+		for (int column = 0; column < BLOCKS_PER_ROW; column++) {
+			for (int row = BLOCKS_PER_COLUMN - 1; row >= 0; row--) {
+				// 如果当前方块是空值，
+				if (blockList[row][column] == null) {
+					// 就从当前位置向上遍历。
+					for (int i = row-1; i >= 0; i--) {
+						// 直到找到了第一个非空的位置，则
+						if (blockList[i][column] != null) {
+							// 把这个位置上的方块放到刚才发现的空位置上。
+							blockList[row][column] = blockList[i][column];
+							// 然后重新设置方块的位置属性。
+							blockList[row][column].setRow(row);
+							blockList[row][column].setColumn(column);
+							// 然后跳出循环，找下一个空位置。
+							break;
+						}
+					}
+				}
+			}
+		}
+		
+		// 下落完之后重绘画面。
+		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
 	
 	public int getScreenWidth() {
