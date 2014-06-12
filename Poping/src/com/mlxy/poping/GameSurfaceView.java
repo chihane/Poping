@@ -161,7 +161,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		} else {
 			// TODO 消除逻辑
 			destroyBlocks(selectedBlocks);
-			//dropBlocks();
+			dropBlocks();
 			
 			// 清空选中方块列表。
 			selectedBlocks = null;
@@ -220,6 +220,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 						if (blockList[i][column] != null) {
 							// 把这个位置上的方块放到刚才发现的空位置上。
 							blockList[row][column] = blockList[i][column];
+							blockList[i][column] = null;
 							// 然后重新设置方块的位置属性。
 							blockList[row][column].setRow(row);
 							blockList[row][column].setColumn(column);
