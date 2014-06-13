@@ -2,8 +2,8 @@
 <resources>
 
     <string name="app_name">Poping</string>
-    <string name="action_settings">Settings</string>
-    <string name="hello_world">Hello world!</string>
     <string name="title_activity_game">GameActivity</string>
+    <string name="button_new_game">新游戏</string>
+    <string name="button_continue_game">继续游戏</string>
 
 </resources>

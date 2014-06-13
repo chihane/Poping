@@ -32,7 +32,7 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	private int topSidePosition;
 
 	/** 存放所有方块的二维数组。 */
-	public final static Block[][] blockList = new Block[BLOCKS_PER_COLUMN][BLOCKS_PER_ROW];
+	public static Block[][] blockList = new Block[BLOCKS_PER_COLUMN][BLOCKS_PER_ROW];
 
 	/** 绘图用画笔。 */
 	private Paint paint;
@@ -58,11 +58,14 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		paint = new Paint();
 		updateHandler = new UpdateHandler(this);
 		
+		// 初始化缓存。
 		selectedBlock = null;
 		selectedBlocks = null;
 		
+		// 初始化游戏信息。
 		score = 0;
-		level = 0;
+		level = 1;
+		initBlockList();
 	}
 	
 	/** 开始新的一关。*/
@@ -101,9 +104,8 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		this.sideLengthOfBlock = screenWidth / BLOCKS_PER_ROW;
 
 		this.topSidePosition = screenHeight - sideLengthOfBlock * BLOCKS_PER_COLUMN;
-
-		// 开始第一关。
-		newLevel();
+		
+		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
 
 	@Override
@@ -262,6 +264,11 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	
 	/** 从总方块列表里消除列表参数中的方块。*/
 	private void destroyBlocks(ArrayList<Block> blockList) {
+		// 检查一下大小。
+		if (blockList.size() == 1) {
+			return;
+		}
+		
 		Block blockToDestroy = null;
 		
 		for (int i = 0; i < blockList.size(); i++) {
@@ -408,5 +415,29 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 
 	public int getTopSidePosition() {
 		return topSidePosition;
+	}
+
+	public static Block[][] getBlockList() {
+		return blockList;
+	}
+
+	public static void setBlockList(Block[][] blockList) {
+		GameSurfaceView.blockList = blockList;
+	}
+
+	public long getScore() {
+		return score;
+	}
+
+	public void setScore(long score) {
+		this.score = score;
+	}
+
+	public long getLevel() {
+		return level;
+	}
+
+	public void setLevel(long level) {
+		this.level = level;
 	}
 }
