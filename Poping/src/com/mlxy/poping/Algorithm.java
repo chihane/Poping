@@ -117,4 +117,19 @@ public class Algorithm {
 			return score;
 		}
 	}
+	
+	/** 根据关卡数计算过关所需得分。*/
+	public long calcRequiredScore(long level) {
+		long score = 0;
+		
+		if (level < 11) {
+			score = level * 2000;
+		} else if (level < 21) {
+			score = 20000 + (level-10) * 3000;
+		} else {
+			score = 50000 + (level-20) * 4000;
+		}
+		
+		return score;
+	}
 }

@@ -2,13 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.mlxy.poping"
     android:versionCode="1"
-    android:versionName="0.5" >
+    android:versionName="0.6" >
 
     <uses-sdk
         android:minSdkVersion="11"
         android:targetSdkVersion="18" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
 
     <application
         android:allowBackup="true"
@@ -27,6 +28,10 @@
         <activity
             android:name="com.mlxy.poping.GameActivity"
             android:label="@string/title_activity_game" >
+        </activity>
+        <activity
+            android:name="com.mlxy.poping.GameOverActivity"
+            android:label="@string/title_activity_game_over" >
         </activity>
     </application>
 

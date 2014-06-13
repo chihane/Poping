@@ -2,7 +2,9 @@ package com.mlxy.poping;
 
 import java.util.ArrayList;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
@@ -49,6 +51,8 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 	private long score;
 	/** 关卡。*/
 	private long level;
+	/** 过关需要的分数。*/
+	private long requiredScore;
 
 	/** 构造函数。 */
 	public GameSurfaceView(Context context) {
@@ -62,15 +66,17 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		selectedBlock = null;
 		selectedBlocks = null;
 		
-		// 初始化游戏信息。
+		// 初始化第一关的游戏信息。
 		score = 0;
 		level = 1;
+		requiredScore = new Algorithm().calcRequiredScore(level);
 		initBlockList();
 	}
 	
 	/** 开始新的一关。*/
 	private void newLevel() {
 		this.level++;
+		this.requiredScore = new Algorithm().calcRequiredScore(level);
 		initBlockList();
 		updateHandler.sendEmptyMessage(UpdateHandler.MESSAGE_REDRAW_ALL);
 	}
@@ -130,11 +136,12 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 			}
 		}
 		
-		// 画出分数。
+		// 画出游戏信息。
 		paint.setColor(Color.BLACK);
 		paint.setTextSize(40);
-		canvas.drawText("Score: " + this.score, 50, 100, paint);
 		canvas.drawText("Level: " + this.level, 50, 50, paint);
+		canvas.drawText("Requirement: " + this.requiredScore, 50, 100, paint);
+		canvas.drawText("Score: " + this.score, 50, 150, paint);
 		paint = new Paint();
 	}
 
@@ -224,11 +231,16 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 				long score = new Algorithm().calcRemainedScore(remainedBlocks);
 				this.score += score;
 				
-				// 进入下一关。
-				newLevel();
-				Toast.makeText(this.getContext(),
-						"剩余方块" + remainedBlocks + "个，得分" + score + "，进入第" + this.level + "关",
-						Toast.LENGTH_SHORT).show();
+				// 判断分数是否达到要求。
+				if (this.score < this.requiredScore) {
+					gameOver();
+				} else {
+					// 进入下一关。
+					newLevel();
+					Toast.makeText(this.getContext(),
+							"剩余方块" + remainedBlocks + "个，得分" + score + "，进入第" + this.level + "关",
+							Toast.LENGTH_SHORT).show();
+				}
 			}
 			
 			// 清空选中方块列表。
@@ -384,6 +396,18 @@ public class GameSurfaceView extends SurfaceView implements SurfaceHolder.Callba
 		}
 		
 		return true;
+	}
+	
+	/** 游戏结束。*/
+	private void gameOver() {
+		Activity parent = (Activity) this.getContext();
+		
+		Intent intent  = new Intent(parent, GameOverActivity.class);
+		intent.putExtra("score", this.score);
+		intent.putExtra("level", this.level);
+		parent.startActivity(intent);
+		
+		parent.finish();
 	}
 	
 	/** 统计列表中剩余方块。*/
