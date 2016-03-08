@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Poping</string>
+    <string name="title_activity_game">GameActivity</string>
+    <string name="button_new_game">新游戏</string>
+    <string name="button_continue_game">继续游戏</string>
+    <string name="title_activity_game_over">GameOverActivity</string>
+    <string name="game_over">死</string>
+    <string name="replay">重新开始</string>
+
+</resources>
