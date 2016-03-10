@@ -3,26 +3,20 @@ package chihane.poping;
 import java.util.ArrayList;
 
 public class Algorithm {
-	/** 已被递归过的方块。*/
-	private ArrayList<Block> checkedBlocks;
-	/** 相同颜色准备返回的方块。*/
-	private ArrayList<Block> blocksInSameColor;
+	private static ArrayList<Block> checkedBlocks;
+	private static ArrayList<Block> blocksInSameColor;
 
-	/** 获取存有与当前方块颜色相同首尾相连的一片方块的列表。*/
-	public ArrayList<Block> getBlocksInSameColor(Block selectedBlock) {
-		// 初始化两个缓存列表。
-		checkedBlocks = new ArrayList<Block>();
-		blocksInSameColor = new ArrayList<Block>();
+	public static ArrayList<Block> getBlocksInSameColor(Block[][] blockList, Block selectedBlock) {
+		checkedBlocks = new ArrayList<>();
+		blocksInSameColor = new ArrayList<>();
 
-		// 执行递归。
-		checkFourSides(selectedBlock);
+		checkFourSides(blockList, selectedBlock);
 		return blocksInSameColor;
 	}
 
-	/** 递归，不停检查四面。*/
-	private void checkFourSides(Block block) {
+	private static void checkFourSides(Block[][] blockList, Block block) {
 		// 如果当前方块已被检查过，则跳出当前递归。
-		if (isChecked(block)) {
+		if (checkedBlocks.contains(block)) {
 			return;
 		}
 
@@ -32,20 +26,20 @@ public class Algorithm {
 		blocksInSameColor.add(block);
 
 		// 检查上下左右的方块。
-		checkUp(block);
-		checkDown(block);
-		checkLeft(block);
-		checkRight(block);
+		checkUp(blockList, block);
+		checkDown(blockList, block);
+		checkLeft(blockList, block);
+		checkRight(blockList, block);
 	}
 
-	private void checkUp(Block block) {
+	private static void checkUp(Block[][] blockList, Block block) {
 		// 越界(上方不存在方块)则跳出。
 		if ((block.getRow()-1) < 0) {
 			return;
 		}
 
 		// 获取上方方块。
-		Block blockUpside = GameSurfaceView.blockList[block.getRow()-1][block.getColumn()];
+		Block blockUpside = blockList[block.getRow()-1][block.getColumn()];
 
 		// 如果方块不存在或者颜色不同就跳出。
 		if (blockUpside == null || blockUpside.getColor() != block.getColor()) {
@@ -53,63 +47,56 @@ public class Algorithm {
 		}
 
 		// 下一次递归。
-		checkFourSides(blockUpside);
+		checkFourSides(blockList, blockUpside);
 	}
 
-	private void checkDown(Block block) {
-		if ((block.getRow()+1) >= GameSurfaceView.BLOCKS_PER_COLUMN) {
+	private static void checkDown(Block[][] blockList, Block block) {
+		if ((block.getRow()+1) >= GamePad.BLOCKS_PER_COLUMN) {
 			return;
 		}
 
-		Block blockDownside = GameSurfaceView.blockList[block.getRow()+1][block.getColumn()];
+		Block blockDownside = blockList[block.getRow()+1][block.getColumn()];
 
 		if (blockDownside == null || blockDownside.getColor() != block.getColor()) {
 			return;
 		}
 
-		checkFourSides(blockDownside);
+		checkFourSides(blockList, blockDownside);
 	}
 
-	private void checkLeft(Block block) {
+	private static void checkLeft(Block[][] blockList, Block block) {
 		if ((block.getColumn()-1) < 0) {
 			return;
 		}
 
-		Block blockLeftside = GameSurfaceView.blockList[block.getRow()][block.getColumn()-1];
+		Block blockLeftside = blockList[block.getRow()][block.getColumn()-1];
 
 		if (blockLeftside == null || blockLeftside.getColor() != block.getColor()) {
 			return;
 		}
 
-		checkFourSides(blockLeftside);
+		checkFourSides(blockList, blockLeftside);
 	}
 
-	private void checkRight(Block block) {
-		if ((block.getColumn()+1) >= GameSurfaceView.BLOCKS_PER_ROW) {
+	private static void checkRight(Block[][] blockList, Block block) {
+		if ((block.getColumn()+1) >= GamePad.BLOCKS_PER_ROW) {
 			return;
 		}
 
-		Block blockRightside = GameSurfaceView.blockList[block.getRow()][block.getColumn()+1];
+		Block blockRightside = blockList[block.getRow()][block.getColumn()+1];
 
 		if (blockRightside == null || blockRightside.getColor() != block.getColor()) {
 			return;
 		}
 
-		checkFourSides(blockRightside);
+		checkFourSides(blockList, blockRightside);
 	}
 
-	private boolean isChecked(Block block) {
-		return checkedBlocks.contains(block);
+	public static long calcDestroyScore(int destroyedBlocks) {
+		return destroyedBlocks * destroyedBlocks * 5;
 	}
 
-	/** 根据消除方块数量计算得分。*/
-	public long calcDestroyScore(int destroyedBlocks) {
-		long score = destroyedBlocks * destroyedBlocks * 5;
-		return score;
-	}
-
-	/** 根据剩余方块数计算得分。*/
-	public long calcRemainedScore(int remainedBlocks) {
+	public static long calcRemainedScore(int remainedBlocks) {
 		long score = 2000 - remainedBlocks * 100;
 		if (score < 0) {
 			return 0;
@@ -118,9 +105,8 @@ public class Algorithm {
 		}
 	}
 
-	/** 根据关卡数计算过关所需得分。*/
-	public long calcRequiredScore(long level) {
-		long score = 0;
+	public static long calcRequiredScore(long level) {
+		long score;
 
 		if (level < 11) {
 			score = level * 2000;
